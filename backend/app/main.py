@@ -4,6 +4,7 @@ from app.api.v1.hosts import router as hosts_router
 from app.api.v1.auth import router as auth_router
 from app.db.session import create_db_and_tables
 from app.services.ping_service import ping_loop
+from app.services.mqtt_service import mqtt_client
 from app.ws.alerts import router as ws_router
 
 app = FastAPI()
@@ -23,6 +24,14 @@ async def on_startup():
     create_db_and_tables()
     # Start ping loop in background (non-blocking)
     asyncio.create_task(ping_loop())
+    mqtt_client.connect()
+    print("[STARTUP] MQTT client connected")
+
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    mqtt_client.disconnect()
+    print("[SHUTDOWN] MQTT client disconnected")
 
 
 
