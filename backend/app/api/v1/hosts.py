@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from typing import List
-from sqlmodel import select, delete, Session
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from typing import List, Optional
+from sqlmodel import select, delete, Session, col
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.session import get_session
@@ -12,6 +12,32 @@ router = APIRouter()
 @router.get("/", response_model=List[Host])
 def read_hosts(session: Session = Depends(get_session)):
     return session.exec(select(Host)).all()
+
+
+@router.get("/search", response_model=List[Host])
+def search_hosts(
+    name: Optional[str] = Query(None, description="Search by host name (contains)"),
+    ip: Optional[str] = Query(None, description="Search by IP address (contains)"),
+    status: Optional[str] = Query(None, description="Filter by status (UP/DOWN/unknown)"),
+    session: Session = Depends(get_session)
+):
+    """
+    Search hosts by name, IP, or status using LIKE/contains pattern matching.
+    All parameters are optional and can be combined.
+    """
+    query = select(Host)
+    
+    if name:
+        query = query.where(col(Host.name).contains(name))
+    
+    if ip:
+        query = query.where(col(Host.ip).contains(ip))
+    
+    if status:
+        query = query.where(Host.status == status)
+    
+    results = session.exec(query).all()
+    return results
 
 
 @router.post("/", response_model=Host, status_code=status.HTTP_201_CREATED)
