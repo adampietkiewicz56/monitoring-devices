@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Dict
 import socket
 import platform
+import logging
 
 from icmplib import ping
 from sqlmodel import Session, select
@@ -11,6 +12,7 @@ from app.db.session import engine
 from app.db.models import Host, Alert
 from app.ws.alerts import manager
 
+logger = logging.getLogger(__name__)
 
 MAX_FAILURES = 3
 PING_INTERVAL = 8
@@ -51,13 +53,13 @@ def is_host_alive(ip: str) -> bool:
 
 async def ping_loop():
     failure_counts: Dict[int, int] = {}
-    print("[PING_LOOP] Starting...")
+    logger.info("Ping loop starting...")
 
     while True:
         try:
             with Session(engine) as session:
                 hosts = session.exec(select(Host)).all()
-                print(f"[PING_LOOP] Checking {len(hosts)} hosts...")
+                logger.debug(f"Checking {len(hosts)} hosts...")
 
                 for host in hosts:
                     try:
@@ -65,13 +67,13 @@ async def ping_loop():
                         loop = asyncio.get_event_loop()
                         alive = await asyncio.wait_for(
                             loop.run_in_executor(None, is_host_alive, host.ip),
-                            timeout=2  # Reduce from 5s to 2s per host
+                            timeout=2
                         )
                     except asyncio.TimeoutError:
-                        print(f"  [TIMEOUT] {host.name} ({host.ip})")
+                        logger.debug(f"TIMEOUT {host.name} ({host.ip})")
                         alive = False
                     except Exception as ping_error:
-                        print(f"  [ERROR] {host.name}: {ping_error}")
+                        logger.error(f"Ping error for {host.name}: {ping_error}")
                         alive = False
 
                     # ===== HOST UP =====
@@ -81,10 +83,12 @@ async def ping_loop():
 
                         if previous_status == "unknown":
                             host.status = "UP"
-                            print(f"✓ Host {host.name} ({host.ip}) initialized as UP")
+                            host.last_seen = datetime.utcnow()
+                            logger.info(f"[UP] Host {host.name} ({host.ip}) initialized as UP")
 
                         elif previous_status == "DOWN":
                             host.status = "UP"
+                            host.last_seen = datetime.utcnow()
 
                             alert = Alert(
                                 host_id=host.id,
@@ -93,11 +97,11 @@ async def ping_loop():
                             )
                             session.add(alert)
 
-                            print(f"✓ ALERT: Host {host.name} recovered")
+                            logger.warning(f"[RECOVERED] ALERT: Host {host.name} recovered")
                             try:
                                 await manager.broadcast(f"ALERT: Host {host.name} recovered (UP)")
                             except Exception as ws_error:
-                                print(f"  [WS error]: {ws_error}")
+                                logger.debug(f"WS broadcast error: {ws_error}")
 
                         host.last_seen = datetime.utcnow()
 
@@ -117,11 +121,11 @@ async def ping_loop():
                             )
                             session.add(alert)
 
-                            print(f"✗ Host {host.name} ({host.ip}) initialized as DOWN")
+                            logger.warning(f"[DOWN] Host {host.name} ({host.ip}) initialized as DOWN")
                             try:
                                 await manager.broadcast(f"ALERT: Host {host.name} is DOWN")
                             except Exception as ws_error:
-                                print(f"  [WS error]: {ws_error}")
+                                logger.debug(f"WS broadcast error: {ws_error}")
 
                         elif (
                             failure_counts[host.id] >= MAX_FAILURES
@@ -136,19 +140,25 @@ async def ping_loop():
                             )
                             session.add(alert)
 
-                            print(f"✗ ALERT: Host {host.name} is DOWN")
+                            logger.warning(f"[DOWN] ALERT: Host {host.name} is DOWN")
                             try:
                                 await manager.broadcast(f"ALERT: Host {host.name} is DOWN")
                             except Exception as ws_error:
-                                print(f"  [WS error]: {ws_error}")
+                                logger.debug(f"WS broadcast error: {ws_error}")
 
                     session.add(host)
 
-                session.commit()
+                try:
+                    session.commit()
+                except Exception as commit_error:
+                    # Handle case where host was deleted by another session
+                    if "StaleDataError" in str(type(commit_error).__name__):
+                        logger.debug(f"Host was deleted during ping check: {commit_error}")
+                        session.rollback()
+                    else:
+                        raise
 
         except Exception as e:
-            print(f"[PING_LOOP ERROR] {type(e).__name__}: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Ping loop error: {type(e).__name__}: {e}")
 
         await asyncio.sleep(PING_INTERVAL)

@@ -2,6 +2,13 @@ from datetime import datetime
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
 from sqlalchemy import Column, ForeignKey
+from enum import Enum
+
+
+class UserRole(str, Enum):
+    ADMIN = "ADMIN"
+    USER = "USER"
+    VIEWER = "VIEWER"
 
 
 class User(SQLModel, table=True):
@@ -10,6 +17,7 @@ class User(SQLModel, table=True):
     email: Optional[str] = Field(default=None, unique=True, index=True)
     hashed_password: str
     is_active: bool = Field(default=True)
+    role: UserRole = Field(default=UserRole.USER)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 

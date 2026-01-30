@@ -23,17 +23,17 @@ class MQTTClient:
 
     def on_connect(self, client, userdata, flags, rc):
         if rc == 0:
-            print("[MQTT] Connected to broker")
+            logger.info("MQTT: Connected to broker")
             self.connected = True
             client.subscribe(MQTT_TOPIC)
-            print(f"[MQTT] Subscribed to {MQTT_TOPIC}")
+            logger.info(f"MQTT: Subscribed to {MQTT_TOPIC}")
         else:
-            print(f"[MQTT] Connection failed with code {rc}")
+            logger.error(f"MQTT: Connection failed with code {rc}")
 
     def on_message(self, client, userdata, msg):
         try:
             payload = json.loads(msg.payload.decode())
-            print(f"[MQTT] Received: {payload}")
+            logger.debug(f"MQTT: Received: {payload}")
             
             host_id = payload.get("host_id")
             status = payload.get("status")
@@ -45,7 +45,7 @@ class MQTTClient:
                 # Check if host exists
                 host = session.get(Host, host_id)
                 if not host:
-                    print(f"[MQTT] Host {host_id} not found")
+                    logger.warning(f"MQTT: Host {host_id} not found")
                     return
                 
                 # Create alert
@@ -56,17 +56,17 @@ class MQTTClient:
                 )
                 session.add(alert)
                 session.commit()
-                print(f"[MQTT] Alert saved for host {host_id}")
+                logger.info(f"MQTT: Alert saved for host {host_id}")
                 
         except Exception as e:
-            print(f"[MQTT] Error processing message: {e}")
+            logger.error(f"MQTT: Error processing message: {e}")
 
     def connect(self):
         try:
             self.client.connect(MQTT_BROKER, MQTT_PORT, keepalive=60)
             self.client.loop_start()
         except Exception as e:
-            print(f"[MQTT] Failed to connect: {e}")
+            logger.error(f"MQTT: Failed to connect: {e}")
 
     def disconnect(self):
         self.client.loop_stop()
