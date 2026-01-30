@@ -1,0 +1,51 @@
+.navbar {
+  background: #2c3e50;
+  color: white;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar h1 {
+  font-size: 22px;
+}
+
+.navbar-user {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.role {
+  background: #3498db;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.role.admin {
+  background: #e74c3c;
+}
+
+.btn-logout {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-primary {
+  background: #3498db;
+  color: white;
+}
+
+.btn-success {
+  background: #27ae60;
+  color: white;
+}
+
+.btn-danger {
+  background: #e74c3c;
+  color: white;
+}

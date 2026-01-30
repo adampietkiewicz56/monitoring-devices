@@ -20,6 +20,24 @@ IS_WINDOWS = platform.system() == "Windows"
 
 
 def is_host_alive(ip: str) -> bool:
+    # Special case for localhost - always use socket check
+    if ip in ('127.0.0.1', 'localhost', '::1'):
+        try:
+            # Try Python's own loopback
+            with socket.create_connection((ip, 8000), timeout=1):
+                return True
+        except Exception:
+            # If backend port is closed, try simple socket test
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(1)
+                s.connect((ip if ip != 'localhost' else '127.0.0.1', 80))
+                s.close()
+                return True
+            except Exception:
+                # Localhost always exists, even if no ports open
+                return True
+    
     # Na Windows ICMP wymaga admin - używamy tylko TCP
     if IS_WINDOWS:
         try:

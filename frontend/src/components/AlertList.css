@@ -1,0 +1,55 @@
+.alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.empty {
+  text-align: center;
+  padding: 40px;
+  color: #7f8c8d;
+}
+
+.alert-item {
+  background: white;
+  padding: 15px;
+  border-radius: 4px;
+  border-left: 4px solid #3498db;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.alert-item.critical {
+  border-left-color: #e74c3c;
+}
+
+.alert-item.info {
+  border-left-color: #3498db;
+}
+
+.alert-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.severity {
+  font-weight: bold;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: #ecf0f1;
+}
+
+.alert-item.critical .severity {
+  background: #fee;
+  color: #c33;
+}
+
+.time {
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+.message {
+  color: #2c3e50;
+}

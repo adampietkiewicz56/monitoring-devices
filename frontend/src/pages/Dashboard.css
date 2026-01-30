@@ -1,0 +1,75 @@
+.dashboard {
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 30px 0;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.header h2 {
+  font-size: 28px;
+  color: #2c3e50;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.actions input {
+  min-width: 250px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+  color: #7f8c8d;
+}
+
+.notification {
+  position: fixed;
+  top: 70px;
+  right: 20px;
+  background: #3498db;
+  color: white;
+  padding: 15px 20px;
+  border-radius: 4px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  z-index: 1000;
+  animation: slideIn 0.3s;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.alerts-section {
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.alerts-section h2 {
+  font-size: 24px;
+  color: #2c3e50;
+  margin-bottom: 20px;
+}

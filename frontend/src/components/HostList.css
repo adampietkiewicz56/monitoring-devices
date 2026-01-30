@@ -1,0 +1,59 @@
+.host-list {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.empty {
+  text-align: center;
+  padding: 40px;
+  color: #7f8c8d;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background: #ecf0f1;
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+td {
+  padding: 15px;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+tr:hover {
+  background: #f8f9fa;
+}
+
+.status {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  color: white;
+}
+
+.status.green {
+  background: #27ae60;
+}
+
+.status.red {
+  background: #e74c3c;
+}
+
+.status.gray {
+  background: #95a5a6;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
