@@ -10,7 +10,7 @@ DATABASE_URL = f"sqlite:///{DB_FILE}"
 
 
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False}) #specific argument, SQLite normally checks whether connection is used in the same thread it was created in. False disables that
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
 
 def create_db_and_tables():

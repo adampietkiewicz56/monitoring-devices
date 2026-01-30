@@ -11,11 +11,21 @@ class ConnectionManager:
         self.active_connections.append(websocket)
 
     def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
 
     async def broadcast(self, message: str):
+        disconnected = []
         for connection in self.active_connections:
-            await connection.send_text(message)
+            try:
+                await connection.send_text(message)
+            except Exception as e:
+                # Client disconnected or error - mark for removal
+                disconnected.append(connection)
+        
+        # Cleanup dead connections
+        for conn in disconnected:
+            self.disconnect(conn)
 
 manager = ConnectionManager()
 

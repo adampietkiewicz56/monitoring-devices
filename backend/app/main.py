@@ -19,6 +19,7 @@ app.include_router(ws_router)
 @app.on_event("startup")
 async def on_startup():
     create_db_and_tables()
+    # Start ping loop in background (non-blocking)
     asyncio.create_task(ping_loop())
 
 
