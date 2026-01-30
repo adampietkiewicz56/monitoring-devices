@@ -1,0 +1,16 @@
+.confirm-modal {
+  max-width: 450px;
+}
+
+.confirm-modal h3 {
+  color: #e74c3c;
+  margin-bottom: 15px;
+  font-size: 20px;
+}
+
+.confirm-modal p {
+  color: #2c3e50;
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 25px;
+}

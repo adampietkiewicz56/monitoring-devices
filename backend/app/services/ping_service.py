@@ -102,7 +102,19 @@ async def ping_loop():
                         if previous_status == "unknown":
                             host.status = "UP"
                             host.last_seen = datetime.utcnow()
+                            
+                            alert = Alert(
+                                host_id=host.id,
+                                severity="INFO",
+                                message="Host is UP"
+                            )
+                            session.add(alert)
+                            
                             logger.info(f"[UP] Host {host.name} ({host.ip}) initialized as UP")
+                            try:
+                                await manager.broadcast(f"ALERT: Host {host.name} is UP")
+                            except Exception as ws_error:
+                                logger.debug(f"WS broadcast error: {ws_error}")
 
                         elif previous_status == "DOWN":
                             host.status = "UP"
@@ -120,8 +132,6 @@ async def ping_loop():
                                 await manager.broadcast(f"ALERT: Host {host.name} recovered (UP)")
                             except Exception as ws_error:
                                 logger.debug(f"WS broadcast error: {ws_error}")
-
-                        host.last_seen = datetime.utcnow()
 
                     # ===== HOST DOWN =====
                     else:

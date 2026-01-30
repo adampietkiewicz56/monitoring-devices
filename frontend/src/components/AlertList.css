@@ -23,13 +23,38 @@
 }
 
 .alert-item.info {
-  border-left-color: #3498db;
+  border-left-color: #27ae60;
 }
 
 .alert-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  gap: 15px;
+}
+
+.alert-host {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.alert-host strong {
+  color: #2c3e50;
+  font-size: 15px;
+}
+
+.alert-host .ip {
+  color: #7f8c8d;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.alert-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .severity {
@@ -38,6 +63,7 @@
   padding: 2px 8px;
   border-radius: 3px;
   background: #ecf0f1;
+  white-space: nowrap;
 }
 
 .alert-item.critical .severity {
@@ -45,11 +71,18 @@
   color: #c33;
 }
 
+.alert-item.info .severity {
+  background: #e8f5e9;
+  color: #27ae60;
+}
+
 .time {
   font-size: 12px;
   color: #7f8c8d;
+  white-space: nowrap;
 }
 
 .message {
   color: #2c3e50;
+  font-size: 14px;
 }

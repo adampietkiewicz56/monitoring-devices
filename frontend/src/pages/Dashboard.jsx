@@ -3,6 +3,7 @@ import { hostsAPI, alertsAPI, authAPI } from '../services/api'
 import HostList from '../components/HostList'
 import AlertList from '../components/AlertList'
 import AddHostModal from '../components/AddHostModal'
+import ConfirmModal from '../components/ConfirmModal'
 import './Dashboard.css'
 
 function Dashboard({ user, onLogout }) {
@@ -12,6 +13,7 @@ function Dashboard({ user, onLogout }) {
   const [showModal, setShowModal] = useState(false)
   const [search, setSearch] = useState('')
   const [notifications, setNotifications] = useState([])
+  const [confirmDelete, setConfirmDelete] = useState(null) // { id, name }
 
   useEffect(() => {
     loadData()
@@ -74,12 +76,18 @@ function Dashboard({ user, onLogout }) {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this host?')) return
+    const host = hosts.find(h => h.id === id)
+    setConfirmDelete({ id, name: host?.name || 'this host' })
+  }
+
+  const confirmDeleteAction = async () => {
     try {
-      await hostsAPI.delete(id)
+      await hostsAPI.delete(confirmDelete.id)
       loadData()
+      setConfirmDelete(null)
     } catch (err) {
       alert('Failed to delete: ' + (err.response?.data?.detail || 'Permission denied'))
+      setConfirmDelete(null)
     }
   }
 
@@ -133,6 +141,13 @@ function Dashboard({ user, onLogout }) {
             <div className="alerts-section">
               <h2>Recent Alerts</h2>
               <AlertList alerts={alerts.slice(0, 10)} />
+      {confirmDelete && (
+        <ConfirmModal
+          message={`Are you sure you want to delete "${confirmDelete.name}"? This action cannot be undone.`}
+          onConfirm={confirmDeleteAction}
+          onCancel={() => setConfirmDelete(null)}
+        />
+      )}
             </div>
           </>
         )}

@@ -42,7 +42,7 @@ class Alert(SQLModel, table=True):
     severity: str
     message: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-
+    
     host: Optional[Host] = Relationship(back_populates="alerts")
 
 
