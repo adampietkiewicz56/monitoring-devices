@@ -37,6 +37,13 @@ async def get_current_user(
     
     try:
         payload = decode_token(token)
+        if payload is None:
+            logger.warning("Token decoding failed")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials"
+            )
+        
         username: str = payload.get("sub")
         user_id: int = payload.get("user_id")
         

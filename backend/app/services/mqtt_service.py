@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 
 MQTT_BROKER = "test.mosquitto.org"
 MQTT_PORT = 1883
-MQTT_TOPIC = "monitoring/alerts"
+MQTT_TOPIC_SUB = "monitoring/alerts"
+MQTT_TOPIC_PUB = "monitoring/alerts/published"
 
 
 class MQTTClient:
@@ -25,8 +26,8 @@ class MQTTClient:
         if rc == 0:
             logger.info("MQTT: Connected to broker")
             self.connected = True
-            client.subscribe(MQTT_TOPIC)
-            logger.info(f"MQTT: Subscribed to {MQTT_TOPIC}")
+            client.subscribe(MQTT_TOPIC_SUB)
+            logger.info(f"MQTT: Subscribed to {MQTT_TOPIC_SUB}")
         else:
             logger.error(f"MQTT: Connection failed with code {rc}")
 
@@ -60,6 +61,26 @@ class MQTTClient:
                 
         except Exception as e:
             logger.error(f"MQTT: Error processing message: {e}")
+
+    def publish_alert(self, host_id: int, host_name: str, severity: str, message: str):
+        """Publish alert to MQTT topic - 0.75 pkt extension"""
+        try:
+            if not self.connected:
+                logger.warning("MQTT: Not connected, cannot publish")
+                return
+            
+            payload = {
+                "host_id": host_id,
+                "host_name": host_name,
+                "severity": severity,
+                "message": message,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+            self.client.publish(MQTT_TOPIC_PUB, json.dumps(payload), qos=1)
+            logger.debug(f"MQTT: Published alert for host {host_name}: {message}")
+        except Exception as e:
+            logger.error(f"MQTT: Publish error: {e}")
 
     def connect(self):
         try:

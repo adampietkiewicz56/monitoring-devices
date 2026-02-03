@@ -11,6 +11,7 @@ from sqlmodel import Session, select
 from app.db.session import engine
 from app.db.models import Host, Alert
 from app.ws.alerts import manager
+from app.services.mqtt_service import mqtt_client
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +111,9 @@ async def ping_loop():
                             )
                             session.add(alert)
                             
+                            # Publish to MQTT
+                            mqtt_client.publish_alert(host.id, host.name, "INFO", "Host is UP")
+                            
                             logger.info(f"[UP] Host {host.name} ({host.ip}) initialized as UP")
                             try:
                                 await manager.broadcast(f"ALERT: Host {host.name} is UP")
@@ -126,6 +130,9 @@ async def ping_loop():
                                 message="Host recovered (UP)"
                             )
                             session.add(alert)
+
+                            # Publish to MQTT
+                            mqtt_client.publish_alert(host.id, host.name, "INFO", "Host recovered (UP)")
 
                             logger.warning(f"[RECOVERED] ALERT: Host {host.name} recovered")
                             try:
@@ -149,6 +156,9 @@ async def ping_loop():
                             )
                             session.add(alert)
 
+                            # Publish to MQTT
+                            mqtt_client.publish_alert(host.id, host.name, "CRITICAL", "Host is DOWN")
+
                             logger.warning(f"[DOWN] Host {host.name} ({host.ip}) initialized as DOWN")
                             try:
                                 await manager.broadcast(f"ALERT: Host {host.name} is DOWN")
@@ -167,6 +177,9 @@ async def ping_loop():
                                 message="Host is DOWN"
                             )
                             session.add(alert)
+
+                            # Publish to MQTT
+                            mqtt_client.publish_alert(host.id, host.name, "CRITICAL", "Host is DOWN")
 
                             logger.warning(f"[DOWN] ALERT: Host {host.name} is DOWN")
                             try:

@@ -21,15 +21,23 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
+class HostGroup(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(unique=True, index=True)
+    description: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    hosts: List["Host"] = Relationship(back_populates="group")
+
+
 class Host(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     ip: str
     status: Optional[str] = Field(default="unknown")
     last_seen: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    group_id: Optional[int] = Field(default=None, sa_column=Column(ForeignKey("hostgroup.id", ondelete="SET NULL")))
 
-
-    #added on CASCADE
+    group: Optional[HostGroup] = Relationship(back_populates="hosts")
     alerts: List["Alert"] = Relationship(back_populates="host", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
 
 

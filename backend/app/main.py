@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from app.api.v1.hosts import router as hosts_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.alerts import router as alerts_router
+from app.api.v1.hostgroups import router as hostgroups_router
 from app.db.session import create_db_and_tables
 from app.services.ping_service import ping_loop
 from app.services.mqtt_service import mqtt_client
@@ -17,6 +18,7 @@ app = FastAPI()
 app.include_router(hosts_router, prefix="/hosts", tags=["hosts"])
 app.include_router(auth_router, tags=["auth"])
 app.include_router(alerts_router, prefix="/alerts", tags=["alerts"])
+app.include_router(hostgroups_router, prefix="/hostgroups", tags=["hostgroups"])
 
 #websocket
 app.include_router(ws_router)

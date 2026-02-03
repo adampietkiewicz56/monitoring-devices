@@ -88,30 +88,35 @@ def login(
 @router.post("/register", response_model=LoginResponse)
 def register(
     data: RegisterRequest,
-    session: Session = Depends(get_session),
-    current_user: User = Depends(require_role(UserRole.ADMIN))
+    session: Session = Depends(get_session)
 ):
     """
-    Register new user (ADMIN only)
+    Register new user - first user becomes ADMIN, rest require ADMIN registration
     """
     # Check if username exists
     statement = select(User).where(User.username == data.username)
     existing_user = session.exec(statement).first()
     
     if existing_user:
-        logger.warning(f"Admin {current_user.username} attempted to register existing user {data.username}")
+        logger.warning(f"Registration attempt with existing user {data.username}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already exists"
         )
     
-    # Create new user with USER role by default
+    # Check if this is the first user
+    user_count = len(session.exec(select(User)).all())
+    
+    # First user is ADMIN, others default to USER
+    role = UserRole.ADMIN if user_count == 0 else UserRole.USER
+    
+    # Create new user
     hashed_pwd = hash_password(data.password)
     new_user = User(
         username=data.username,
         email=data.email,
         hashed_password=hashed_pwd,
-        role=UserRole.USER
+        role=role
     )
     
     session.add(new_user)
@@ -125,7 +130,7 @@ def register(
         expires_delta=access_token_expires
     )
     
-    logger.info(f"Admin {current_user.username} registered new user {new_user.username}")
+    logger.info(f"New user {new_user.username} registered with role {role}")
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -192,6 +197,30 @@ def delete_user(
     
     logger.warning(f"Admin {current_user.username} deleted user {user.username}")
 
+
+
+@router.get("/users")
+def get_users(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """
+    Get all users (ADMIN only) - READ endpoint for 0.15 pkt
+    """
+    users = session.exec(select(User)).all()
+    logger.info(f"Admin {current_user.username} retrieved {len(users)} users")
+    
+    return [
+        {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+            "is_active": user.is_active,
+            "created_at": user.created_at
+        }
+        for user in users
+    ]
 
 
 @router.post("/logout")
