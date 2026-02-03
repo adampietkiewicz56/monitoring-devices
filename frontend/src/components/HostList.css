@@ -57,3 +57,10 @@ tr:hover {
   padding: 6px 12px;
   font-size: 12px;
 }
+
+.group-select {
+  padding: 6px 8px;
+  border: 1px solid #dcdcdc;
+  border-radius: 4px;
+  background: #fff;
+}

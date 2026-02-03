@@ -23,11 +23,18 @@ export const hostsAPI = {
   getAll: () => api.get('/hosts/'),
   search: (params) => api.get('/hosts/search', { params }),
   create: (host) => api.post('/hosts/', host),
+  update: (id, host) => api.put(`/hosts/${id}`, host),
   delete: (id) => api.delete(`/hosts/${id}`)
 };
 
 export const alertsAPI = {
   getAll: () => api.get('/alerts/')
+};
+
+export const hostgroupsAPI = {
+  getAll: () => api.get('/hostgroups/'),
+  create: (group) => api.post('/hostgroups/', group),
+  delete: (id) => api.delete(`/hostgroups/${id}`)
 };
 
 export default api;

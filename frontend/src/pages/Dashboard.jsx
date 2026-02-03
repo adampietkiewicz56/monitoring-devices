@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react'
-import { hostsAPI, alertsAPI, authAPI } from '../services/api'
+import { hostsAPI, alertsAPI, authAPI, hostgroupsAPI } from '../services/api'
 import HostList from '../components/HostList'
 import AlertList from '../components/AlertList'
 import AddHostModal from '../components/AddHostModal'
 import ConfirmModal from '../components/ConfirmModal'
+import HostGroupsPanel from '../components/HostGroupsPanel'
 import './Dashboard.css'
 
 function Dashboard({ user, onLogout }) {
   const [hosts, setHosts] = useState([])
   const [alerts, setAlerts] = useState([])
+  const [groups, setGroups] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [search, setSearch] = useState('')
   const [notifications, setNotifications] = useState([])
   const [confirmDelete, setConfirmDelete] = useState(null) // { id, name }
+  const [confirmGroupDelete, setConfirmGroupDelete] = useState(null) // { id, name }
 
   useEffect(() => {
     loadData()
@@ -38,12 +41,14 @@ function Dashboard({ user, onLogout }) {
 
   const loadData = async () => {
     try {
-      const [hostsRes, alertsRes] = await Promise.all([
+      const [hostsRes, alertsRes, groupsRes] = await Promise.all([
         hostsAPI.getAll(),
-        alertsAPI.getAll()
+        alertsAPI.getAll(),
+        hostgroupsAPI.getAll()
       ])
       setHosts(hostsRes.data)
       setAlerts(alertsRes.data)
+      setGroups(groupsRes.data)
     } catch (err) {
       console.error('Load error:', err)
     } finally {
@@ -75,6 +80,20 @@ function Dashboard({ user, onLogout }) {
     }
   }
 
+  const handleAssignGroup = async (host, groupIdValue) => {
+    const groupId = groupIdValue ? Number(groupIdValue) : null
+    try {
+      await hostsAPI.update(host.id, {
+        name: host.name,
+        ip: host.ip,
+        group_id: groupId
+      })
+      loadData()
+    } catch (err) {
+      alert('Failed to update group: ' + (err.response?.data?.detail || 'Error'))
+    }
+  }
+
   const handleDelete = async (id) => {
     const host = hosts.find(h => h.id === id)
     setConfirmDelete({ id, name: host?.name || 'this host' })
@@ -88,6 +107,30 @@ function Dashboard({ user, onLogout }) {
     } catch (err) {
       alert('Failed to delete: ' + (err.response?.data?.detail || 'Permission denied'))
       setConfirmDelete(null)
+    }
+  }
+
+  const handleCreateGroup = async (data) => {
+    try {
+      await hostgroupsAPI.create(data)
+      loadData()
+    } catch (err) {
+      throw new Error(err.response?.data?.detail || 'Permission denied')
+    }
+  }
+
+  const handleDeleteGroup = (group) => {
+    setConfirmGroupDelete({ id: group.id, name: group.name })
+  }
+
+  const confirmDeleteGroupAction = async () => {
+    try {
+      await hostgroupsAPI.delete(confirmGroupDelete.id)
+      loadData()
+      setConfirmGroupDelete(null)
+    } catch (err) {
+      alert('Failed to delete: ' + (err.response?.data?.detail || 'Permission denied'))
+      setConfirmGroupDelete(null)
     }
   }
 
@@ -137,7 +180,19 @@ function Dashboard({ user, onLogout }) {
           <div className="loading">Loading...</div>
         ) : (
           <>
-            <HostList hosts={hosts} onDelete={handleDelete} role={user.role} />
+            <HostList
+              hosts={hosts}
+              onDelete={handleDelete}
+              role={user.role}
+              groups={groups}
+              onAssignGroup={handleAssignGroup}
+            />
+            <HostGroupsPanel
+              groups={groups}
+              role={user.role}
+              onCreate={handleCreateGroup}
+              onDelete={handleDeleteGroup}
+            />
             <div className="alerts-section">
               <h2>Recent Alerts</h2>
               <AlertList alerts={alerts.slice(0, 10)} />
@@ -148,12 +203,19 @@ function Dashboard({ user, onLogout }) {
           onCancel={() => setConfirmDelete(null)}
         />
       )}
+      {confirmGroupDelete && (
+        <ConfirmModal
+          message={`Are you sure you want to delete group "${confirmGroupDelete.name}"?`}
+          onConfirm={confirmDeleteGroupAction}
+          onCancel={() => setConfirmGroupDelete(null)}
+        />
+      )}
             </div>
           </>
         )}
       </div>
 
-      {showModal && <AddHostModal onClose={() => setShowModal(false)} onAdd={handleAdd} />}
+      {showModal && <AddHostModal onClose={() => setShowModal(false)} onAdd={handleAdd} groups={groups} />}
     </div>
   )
 }

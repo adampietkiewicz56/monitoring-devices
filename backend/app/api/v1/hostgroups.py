@@ -68,7 +68,7 @@ def read_hostgroup(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
-    """READ - Get single host group with hosts - 0.15 pkt"""
+    """READ - Get single host group with hosts"""
     group = session.get(HostGroup, group_id)
     if not group:
         raise HTTPException(status_code=404, detail=f"Host group {group_id} not found")
@@ -89,7 +89,7 @@ def update_hostgroup(
     session: Session = Depends(get_session),
     current_user: User = Depends(require_role(UserRole.ADMIN))
 ):
-    """UPDATE - Update host group (ADMIN only) - 0.15 pkt"""
+    """UPDATE - Update host group"""
     group = session.get(HostGroup, group_id)
     if not group:
         raise HTTPException(status_code=404, detail=f"Host group {group_id} not found")
@@ -118,7 +118,7 @@ def delete_hostgroup(
     session: Session = Depends(get_session),
     current_user: User = Depends(require_role(UserRole.ADMIN))
 ):
-    """DELETE - Delete host group (ADMIN only) - 0.15 pkt"""
+    """DELETE - Delete host group"""
     group = session.get(HostGroup, group_id)
     if not group:
         raise HTTPException(status_code=404, detail=f"Host group {group_id} not found")
@@ -128,3 +128,55 @@ def delete_hostgroup(
     session.commit()
     
     logger.warning(f"Admin {current_user.username} deleted host group '{group_name}'")
+
+
+@router.put("/{group_id}/hosts/{host_id}", response_model=dict)
+def assign_host_to_group(
+    group_id: int,
+    host_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Assign host to host group (ADMIN only)"""
+    group = session.get(HostGroup, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail=f"Host group {group_id} not found")
+
+    host = session.get(Host, host_id)
+    if not host:
+        raise HTTPException(status_code=404, detail=f"Host {host_id} not found")
+
+    host.group_id = group_id
+    session.add(host)
+    session.commit()
+    session.refresh(host)
+
+    logger.info(f"Admin {current_user.username} assigned host {host.id} to group {group.name}")
+
+    return {
+        "host_id": host.id,
+        "group_id": group.id,
+        "group_name": group.name
+    }
+
+
+@router.delete("/{group_id}/hosts/{host_id}", status_code=204)
+def unassign_host_from_group(
+    group_id: int,
+    host_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Remove host from host group (ADMIN only)"""
+    host = session.get(Host, host_id)
+    if not host:
+        raise HTTPException(status_code=404, detail=f"Host {host_id} not found")
+
+    if host.group_id != group_id:
+        raise HTTPException(status_code=400, detail="Host is not in this group")
+
+    host.group_id = None
+    session.add(host)
+    session.commit()
+
+    logger.info(f"Admin {current_user.username} unassigned host {host.id} from group {group_id}")

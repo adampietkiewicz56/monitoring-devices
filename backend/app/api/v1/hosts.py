@@ -83,6 +83,8 @@ def update_host(
 
     host.name = host_data.name
     host.ip = host_data.ip
+    if host_data.group_id is not None:
+        host.group_id = host_data.group_id
 
     try:
         session.add(host)
