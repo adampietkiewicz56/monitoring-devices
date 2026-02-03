@@ -71,3 +71,26 @@ button[type="submit"] {
 .info p {
   margin: 5px 0;
 }
+.toggle-auth {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.toggle-auth p {
+  color: #7f8c8d;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: #667eea;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0;
+  font-size: 14px;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}

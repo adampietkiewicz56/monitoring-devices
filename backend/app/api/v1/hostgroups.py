@@ -27,7 +27,7 @@ def create_hostgroup(
     session: Session = Depends(get_session),
     current_user: User = Depends(require_role(UserRole.ADMIN))
 ):
-    """CREATE - Create host group (ADMIN only) - 0.15 pkt"""
+    """CREATE - Create host group"""
     existing = session.exec(select(HostGroup).where(HostGroup.name == data.name)).first()
     if existing:
         raise HTTPException(status_code=400, detail=f"Host group '{data.name}' already exists")
@@ -47,7 +47,7 @@ def read_hostgroups(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
-    """READ - Get all host groups - 0.15 pkt"""
+    """READ - Get all host groups"""
     groups = session.exec(select(HostGroup)).all()
     
     return [
