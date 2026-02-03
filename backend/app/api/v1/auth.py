@@ -12,7 +12,7 @@ from app.utils.jwt_utils import (
     create_access_token,
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
-from app.utils.role_decorator import require_role
+from app.utils.role_decorator import require_role, get_current_user
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -34,6 +34,12 @@ class RegisterRequest(BaseModel):
     username: str
     password: str
     email: str = None
+
+
+class UserUpdate(BaseModel):
+    email: str = None
+    password: str = None
+    role: UserRole = None
 
 
 @router.post("/login", response_model=LoginResponse)
@@ -126,6 +132,66 @@ def register(
         "username": new_user.username,
         "role": new_user.role
     }
+
+
+@router.put("/users/{user_id}", response_model=dict)
+def update_user(
+    user_id: int,
+    user_update: UserUpdate,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """
+    Update user details (ADMIN only)
+    """
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+    
+    # Update fields if provided
+    if user_update.email:
+        user.email = user_update.email
+    if user_update.password:
+        user.hashed_password = hash_password(user_update.password)
+    if user_update.role:
+        user.role = user_update.role
+    
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    
+    logger.info(f"Admin {current_user.username} updated user {user.username}")
+    
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role,
+        "is_active": user.is_active
+    }
+
+
+@router.delete("/users/{user_id}", status_code=204)
+def delete_user(
+    user_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """
+    Delete user (ADMIN only)
+    """
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+    
+    if user.id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    session.delete(user)
+    session.commit()
+    
+    logger.warning(f"Admin {current_user.username} deleted user {user.username}")
+
 
 
 @router.post("/logout")
